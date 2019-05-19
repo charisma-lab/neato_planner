@@ -2,29 +2,45 @@
 import rospy
 import tf
 import numpy as np
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import PoseStamped
+import tf_conversions.posemath as posemath
 
-class NeatoTF(object):
+class MCLTf(object):
     def __init__(self):
         rospy.init_node('neato_tf')
         self.br = tf.TransformBroadcaster()
+        self.tf_listener =  tf.TransformListener()
         rospy.sleep(1.0)
-        rospy.Subscriber('neato01/pose', Pose, self.pose_callback)
+        rospy.Subscriber('neato01/pose', PoseStamped, self.pose_callback)
         self.transform_position = np.array([0., 0., 0.])
         self.transform_quaternion = np.array([0., 0., 0., 1.0])
 
     def pose_callback(self, pose):
-        self.transform_position = np.array([pose.position.x,pose.position.y,pose.position.z])
-        self.transform_quaternion = np.array([pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w])
+
+
+            odom_pose = self.tf_listener.transformPose('odom', 
+                                                       pose)
+            frame = posemath.fromMsg(odom_pose.pose).Inverse()
+            odom_pose.pose = posemath.toMsg(frame)
+
+            self.transform_position[0] = odom_pose.pose.position.x
+            self.transform_position[1] = odom_pose.pose.position.y
+            self.transform_quaternion[0] = odom_pose.pose.orientation.x
+            self.transform_quaternion[1] = odom_pose.pose.orientation.y
+            self.transform_quaternion[2] = odom_pose.pose.orientation.z
+            self.transform_quaternion[3] = odom_pose.pose.orientation.w
+            
+        except tf.Exception as e:
+            print(e)
 
 if __name__ == '__main__':
     try:
-        td = NeatoTF()
+        td = MCLTf()
         while not rospy.is_shutdown():
             td.br.sendTransform(td.transform_position,
                              td.transform_quaternion,
                              rospy.Time.now(),
-                             "base_footprint",
+                             "odom",
                              "map")
             rospy.sleep(.1)
     except rospy.ROSInterruptException:
