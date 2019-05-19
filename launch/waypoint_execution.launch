@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="world_file" value=" $(find neato_planner)/maps/stage/maze.world"/>
+  <include file="$(find turtlebot_stage)/launch/turtlebot_in_stage.launch">
+     <arg name="world_file" value="$(arg world_file)"/>
+  </include>
+
+  <node pkg="neato_planner" name="execute_waypoints" type="execute_waypoints.py" output="screen"/>
+  <node pkg="neato_planner" name="test_waypoint_publisher" type="test_waypoints.py" output="screen"/>
+
+</launch>
