@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="world_file" value=" $(find neato_planner)/maps/stage/neato.world"/>
+  <arg name="map_file"  value="$(find neato_planner)/maps/map_neato.yaml"/>
+  <include file="$(find neato_planner)/launch/turtlebot_in_stage.launch">
+     <arg name="world_file" value="$(arg world_file)"/>
+     <arg name="map_file"  value="$(arg map_file)"/>
+  </include>
+  <!--  **************** Visualisation ****************  -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find neato_planner)/rviz/neato_navigation.rviz"/>
+  
+</launch>
+
