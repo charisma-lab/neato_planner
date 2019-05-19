@@ -1,8 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-
-
-
   <node pkg="neato_planner" name="execute_waypoints" type="execute_waypoints.py" output="screen"/>
   <node pkg="neato_planner" name="test_waypoint_publisher" type="test_waypoints.py" output="screen"/>
 
