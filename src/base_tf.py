@@ -14,8 +14,8 @@ class NeatoTF(object):
         self.transform_quaternion = np.array([0., 0., 0., 1.0])
 
     def pose_callback(self, pose):
-        self.transform_position = pose.position
-        self.transform_quaternion = pose.orientation
+        self.transform_position = np.array([pose.position.x,pose.position.y,pose.position.z])
+        self.transform_quaternion = np.array([pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w])
 
 if __name__ == '__main__':
     try:
