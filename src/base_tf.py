@@ -17,7 +17,7 @@ class MCLTf(object):
 
     def pose_callback(self, pose):
 
-
+        try:
             odom_pose = self.tf_listener.transformPose('odom', 
                                                        pose)
             frame = posemath.fromMsg(odom_pose.pose).Inverse()

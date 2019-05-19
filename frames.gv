@@ -1,0 +1,9 @@
+digraph G {
+"base_footprint" -> "base_laser_link"[label="Broadcaster: /laser_to_base\nAverage rate: 20.142 Hz\nMost recent transform: 1558235844.366 ( -0.022 sec old)\nBuffer length: 4.915 sec\n"];
+"odom" -> "base_footprint"[label="Broadcaster: /neato\nAverage rate: 5.208 Hz\nMost recent transform: 1558235844.179 ( 0.166 sec old)\nBuffer length: 4.800 sec\n"];
+"map" -> "odom"[label="Broadcaster: /neato_tf\nAverage rate: 10.083 Hz\nMost recent transform: 1558235844.244 ( 0.101 sec old)\nBuffer length: 4.760 sec\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1558235844.345"[ shape=plaintext ] ;
+ }->"map";
+}
