@@ -18,6 +18,13 @@ class MCLTf(object):
 
     def pose_callback(self, pose):
         try:
+            self.tf_listener.waitForTransform('map',
+                                              'odom',
+                                              pose.header.stamp, 
+                                              rospy.Duration(1.0))
+            frame = posemath.fromMsg(pose.pose).Inverse()
+            pose.pose = posemath.toMsg(frame)
+            pose.header.frame_id = 'base_footprint'
             odom_pose = self.tf_listener.transformPose('odom',pose)
             frame = posemath.fromMsg(odom_pose.pose).Inverse()
             odom_pose.pose = posemath.toMsg(frame)
