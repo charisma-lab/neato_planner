@@ -17,15 +17,8 @@ class MCLTf(object):
         self.transform_quaternion = np.array([0., 0., 0., 1.0])
 
     def pose_callback(self, pose):
-<<<<<<< HEAD
-
-        try:
-            odom_pose = self.tf_listener.transformPose('odom', 
-                                                       pose)
-=======
         try:
             odom_pose = self.tf_listener.transformPose('odom',pose)
->>>>>>> cf8100a026841010888d8c602ad24f77e5bc9e79
             frame = posemath.fromMsg(odom_pose.pose).Inverse()
             odom_pose.pose = posemath.toMsg(frame)
 
