@@ -13,7 +13,7 @@ class MCLTf(object):
         rospy.sleep(1.0)
         rospy.Subscriber('neato01/pose', PoseStamped, self.pose_callback)
         self.pose_initialized= True
-        self.transform_position = np.array([0., 0., 0.])
+        self.transform_position = np.array([1., 1., 0.])
         self.transform_quaternion = np.array([0., 0., 0., 1.0])
 
     def pose_callback(self, pose):
@@ -38,11 +38,12 @@ class MCLTf(object):
             if not self.pose_initialized:
                 self.pose_initialized = True
         except tf.Exception as e:
-            print(e)
+            print('EXCEPTION - ', e)
 
 if __name__ == '__main__':
     try:
         td = MCLTf()
+        rate = rospy.Rate(10)
         while not rospy.is_shutdown():
             if td.pose_initialized:
                 td.br.sendTransform(td.transform_position,
@@ -50,6 +51,6 @@ if __name__ == '__main__':
                                 rospy.Time.now(),
                                 "odom",
                                 "map")
-                rospy.sleep(.1)
+                rate.sleep()
     except rospy.ROSInterruptException:
         pass
