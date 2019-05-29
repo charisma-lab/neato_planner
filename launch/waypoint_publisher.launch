@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="neato_planner" name="test_waypoint_publisher" type="test_waypoints.py"  output="screen">
+      <param name="waypoints_filepath" value="$(find neato_planner)/waypoints/waypoints.csv"/>
+  </node>
+</launch>
+

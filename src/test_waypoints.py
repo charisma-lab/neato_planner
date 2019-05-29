@@ -1,47 +1,47 @@
 #!/usr/bin/env python
 
-from nav_msgs.msg import Path
-from geometry_msgs.msg import PoseStamped
 import rospy
-import tf
+import csv
+from nav_msgs.msg import Path
+from geometry_msgs.msg import PoseStamped,Pose, Point, Quaternion
+from std_msgs.msg import Header
+from tf.transformations import quaternion_from_euler
 
-'''
-This is a test program for publishing target pose to move_base action server.
-Currently, it is working with one waypoints, and way breaking when testing with multiple waypoints.
-The problem might be in the execution code, waypoint_execution.
-'''
+
+def create_header(frame_id):
+    header = Header()
+    header.stamp = rospy.Time.now()
+    header.frame_id = frame_id
+    return header
+
+def heading(yaw):
+    q = quaternion_from_euler(0, 0, yaw)
+    return Quaternion(*q)
+
+def read_waypoints_from_csv(filename):
+    # Import waypoints.csv into a list (path_points)
+    poses_waypoints = []
+    if filename == '':
+        raise ValueError('No any file path for waypoints file')
+    with open(filename) as f:
+        path_points = [tuple(line) for line in csv.reader(f, delimiter=' ')]
+    path_points = [(float(point[0]), float(point[1]), float(point[2])) for point in path_points]
+    print path_points
+    for point in path_points:
+        header = create_header('map')
+        waypoint = Pose(Point(float(point[0]), float(point[1]), 0), heading(float(point[2])))
+        poses_waypoints.append(PoseStamped(header,waypoint))
+    return poses_waypoints
 
 if __name__=="__main__":
     # Initialize node
     rospy.init_node("test_waypoint_publisher")
-
-    particles_pub = rospy.Publisher('/waypoints_list', Path, queue_size=1)
-
-    p1 = PoseStamped()
-
-    p1.pose.position.x = 5.0
-    p1.pose.position.y = 5.0
-
-    yaw = 0.0
-
-    quaternion = tf.transformations.quaternion_from_euler(0, 0, yaw)
-    p1.pose.orientation.x = quaternion[0]
-    p1.pose.orientation.y = quaternion[1]
-    p1.pose.orientation.z = quaternion[2]
-    p1.pose.orientation.w = quaternion[3]
-
-    waypoints = Path()
-    waypoints.poses.append(p1)
-
-    flag = True 
-
-    rate = rospy.Rate(1)
+    waypoints_pub = rospy.Publisher('/waypoints_list', Path, queue_size=1)
+    filename = rospy.get_param('~waypoints_filepath', '')
+    path = Path()
+    path.header = create_header('map')
+    path.poses= read_waypoints_from_csv(filename)
+    rate = rospy.Rate(0.2)
     while not rospy.is_shutdown():
-        if flag:
-            print("Wait 10 seconds for things to load, before publishing waypoints...")
-            rospy.sleep(10.0)
-            particles_pub.publish(waypoints)
-            flag = False
+        waypoints_pub.publish(path)
         rate.sleep()
-
-    print("Waypoints published.")
