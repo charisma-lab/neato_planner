@@ -11,7 +11,7 @@ class MCLTf(object):
         self.br = tf.TransformBroadcaster()
         self.tf_listener =  tf.TransformListener()
         rospy.sleep(1.0)
-        rospy.Subscriber('neato01/pose', PoseStamped, self.pose_callback)
+        rospy.Subscriber('/pose', PoseStamped, self.pose_callback)
         self.pose_initialized= True
         self.transform_position = np.array([1., 1., 0.])
         self.transform_quaternion = np.array([0., 0., 0., 1.0])
