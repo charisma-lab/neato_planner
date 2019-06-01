@@ -3,7 +3,7 @@
 import rospy
 import csv
 from nav_msgs.msg import Path
-from geometry_msgs.msg import PoseStamped,Pose, Point, Quaternion
+from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
 from std_msgs.msg import Header
 from tf.transformations import quaternion_from_euler
 
@@ -33,6 +33,7 @@ def read_waypoints_from_csv(filename):
         poses_waypoints.append(PoseStamped(header,waypoint))
     return poses_waypoints
 
+
 if __name__=="__main__":
     # Initialize node
     rospy.init_node("test_waypoint_publisher")
@@ -40,7 +41,7 @@ if __name__=="__main__":
     filename = rospy.get_param('~waypoints_filepath', '')
     path = Path()
     path.header = create_header('map')
-    path.poses= read_waypoints_from_csv(filename)
+    path.poses = read_waypoints_from_csv(filename)
     rate = rospy.Rate(0.2)
     while not rospy.is_shutdown():
         waypoints_pub.publish(path)
