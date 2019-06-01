@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import rospy
-from race.msg import drive_param
 from geometry_msgs.msg import PoseStamped,Twist
 import math
 import numpy as np
@@ -16,7 +15,7 @@ class PurePursuit:
         rospy.init_node('pure_pursuit_node')
         rospy.Subscriber('pose', PoseStamped, self.pf_pose_callback, queue_size=1)
         rospy.Subscriber('social_global_plan', Path, self.waypoints_list_cb, queue_size=1)
-        self.drive_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+        self.drive_pub = rospy.Publisher('cmd_vel', Twist, queue_size=1)
         self.current_pose = [0, 0, 0]
         self.last_search_index = 0
         filename = rospy.get_param('~waypoints_filepath', '')
@@ -44,7 +43,7 @@ class PurePursuit:
             self.waypoints_read_flag = True
 
     def check_goal(self,goal):
-        if dist(goal,self.current_pose)<self.GOAL_THRESHOLD:
+        if dist(goal,self.current_pose)<0.1:
             rospy.loginfo("Goal reached")
             return True
         else:
@@ -58,58 +57,59 @@ class PurePursuit:
         pose_y = msg.pose.position.y
         pose_yaw = quaternion_to_euler_yaw(msg.pose.orientation)
         self.current_pose = [pose_x, pose_y, pose_yaw]
-        last_index = len(self.waypoints) - 1
         # print "pose:=", pose_x, pose_y, pose_yaw
-        if not self.check_goal(self.waypoints[last_index]):
+        if self.waypoints_read_flag:
+            last_index = len(self.waypoints) - 1
+            if not self.check_goal(self.waypoints[last_index]):
 
-            if self.LOOP_ENABLE and self.NEAR_END_OF_WAY_POINTS:
-                self.last_search_index = 0
-                self.NEAR_END_OF_WAY_POINTS = False
+                if self.LOOP_ENABLE and self.NEAR_END_OF_WAY_POINTS:
+                    self.last_search_index = 0
+                    self.NEAR_END_OF_WAY_POINTS = False
 
-            if self.SPEED_CONTROL:
-                average_x_from_car = self.get_x_deviation_in_path(pose_x,pose_y,pose_yaw)
-                self.VELOCITY = np.interp(average_x_from_car, [0.0, self.MAX_X_DEVIATION], [ self.STRAIGHT_VEL, self.TURNING_VEL])
-                self.LOOKAHEAD_DISTANCE = np.interp(average_x_from_car, [0.0, self.MAX_X_DEVIATION],
-                                               [self.STRAIGHT_LOOKAHEAD_DIST, self.TURNING_LOOKAHEAD_DIST])
+                if self.SPEED_CONTROL:
+                    average_x_from_car = self.get_x_deviation_in_path(pose_x,pose_y,pose_yaw)
+                    self.VELOCITY = np.interp(average_x_from_car, [0.0, self.MAX_X_DEVIATION], [ self.STRAIGHT_VEL, self.TURNING_VEL])
+                    self.LOOKAHEAD_DISTANCE = np.interp(average_x_from_car, [0.0, self.MAX_X_DEVIATION],
+                                                   [self.STRAIGHT_LOOKAHEAD_DIST, self.TURNING_LOOKAHEAD_DIST])
 
-            # 2. Find the path point closest to the vehicle that is >= 1 lookahead distance from vehicle's current location.
+                # 2. Find the path point closest to the vehicle that is >= 1 lookahead distance from vehicle's current location.
 
-            distance = 0.0
-            for index, point in enumerate(self.waypoints):
-                if index < self.last_search_index:
-                    continue
+                distance = 0.0
+                for index, point in enumerate(self.waypoints):
+                    if index < self.last_search_index:
+                        continue
 
-                distance = dist(point, self.current_pose)
-                if distance >= self.LOOKAHEAD_DISTANCE:
-                    self.last_search_index = index
-                    break
+                    distance = dist(point, self.current_pose)
+                    if distance >= self.LOOKAHEAD_DISTANCE:
+                        self.last_search_index = index
+                        break
 
-            if self.last_search_index == last_index:
-                self.NEAR_END_OF_WAY_POINTS = True
+                if self.last_search_index == last_index:
+                    self.NEAR_END_OF_WAY_POINTS = True
 
-            goal_point = self.waypoints[self.last_search_index]
-            # 3. Transform the goal point to vehicle coordinates.
-            point_x_wrt_car = self.compute_x_wrt_car(goal_point[0] - self.current_pose[0],goal_point[1] - self.current_pose[1],pose_yaw,distance)
+                goal_point = self.waypoints[self.last_search_index]
+                # 3. Transform the goal point to vehicle coordinates.
+                point_x_wrt_car = self.compute_x_wrt_car(goal_point[0] - self.current_pose[0],goal_point[1] - self.current_pose[1],pose_yaw,distance)
 
 
-            # 4. Calculate the curvature = 1/r = 2x/l^2
-            # The curvature is transformed into steering wheel angle by the vehicle on board controller.
-            # Flipping to negative because for the VESC a right steering angle has a negative value.
+                # 4. Calculate the curvature = 1/r = 2x/l^2
+                # The curvature is transformed into steering wheel angle by the vehicle on board controller.
+                # Flipping to negative because for the VESC a right steering angle has a negative value.
 
-            # angle = -2.0 * point_x_wrt_car / distance ** 2
+                # angle = -2.0 * point_x_wrt_car / distance ** 2
 
-            radius = distance ** 2 / (-2.0 * point_x_wrt_car)
-            angular_velocity = self.VELOCITY / radius
-            if angular_velocity>2.0:
-                angular_velocity=2.0
-            elif angular_velocity<-2.0:
-                angular_velocity=-2.0
+                radius = distance ** 2 / (-2.0 * point_x_wrt_car)
+                angular_velocity = self.VELOCITY / radius
+                if angular_velocity>2.0:
+                    angular_velocity=2.0
+                elif angular_velocity<-2.0:
+                    angular_velocity=-2.0
 
-            twist_message= Twist()
-            twist_message.linear.x = self.VELOCITY
-            twist_message.angular.z = angular_velocity
-            self.drive_pub.publish(twist_message)
-            self.waypoints_read_flag = False
+                twist_message= Twist()
+                twist_message.linear.x = self.VELOCITY
+                twist_message.angular.z = angular_velocity
+                self.drive_pub.publish(twist_message)
+                self.waypoints_read_flag = True
 
     def get_x_deviation_in_path(self,pose_x,pose_y,yaw):
         average_x_from_car = 0.0
