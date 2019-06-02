@@ -89,12 +89,15 @@ class PurePursuit:
 
                 # 4. Calculate the curvature = 1/r = 2x/l^2
                 # angle = -2.0 * point_x_wrt_car / distance ** 2
+                if distance != 0:
+                    radius = distance ** 2 / (-2.0 * point_x_wrt_car)
+                    angular_velocity = self.VELOCITY / radius
+                    angular_velocity = np.clip(angular_velocity, -2, 2)
+                    self.send_twist_vel(self.VELOCITY, angular_velocity)
+                elif distance == 0:
+                    self.send_twist_vel(0,0)
 
-                radius = distance ** 2 / (-2.0 * point_x_wrt_car)
-                angular_velocity = self.VELOCITY / radius
-                angular_velocity = np.clip(angular_velocity, -2, 2)
-                self.send_twist_vel(self.VELOCITY, angular_velocity)
-                self.waypoints_read_flag = True
+            self.waypoints_read_flag = True
 
     def send_twist_vel(self, linear_x, angular_z):
         twist_message = Twist()
