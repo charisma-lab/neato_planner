@@ -2,6 +2,8 @@ loop_enable: False
 speed_control: False
 initial_lookahead_distance : 0.4
 initial_velocity : 0.3
+controller_rate : 10
+
 straight_lookahead_dist : 3.0
 turning_lookahead_dist : 0.5
 straight_vel : 2.0
