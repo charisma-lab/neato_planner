@@ -34,8 +34,7 @@ class PurePursuit:
         self.TURN_WINDOW_MAX = rospy.get_param('turn_window_max', 4.5)
         self.MAX_X_DEVIATION = rospy.get_param('max_x_deviation', 4.75)
         self.RATE = rospy.get_param('controller_rate', 10)
-        self.GOAL_THRESHOLD = 0.15
-        self.NEAR_END_OF_WAY_POINTS = False
+        self.GOAL_THRESHOLD = rospy.get_param('goal_threshold', 0.15)
 
     def waypoints_list_cb(self, msg):
         if not self.waypoints_read_flag:

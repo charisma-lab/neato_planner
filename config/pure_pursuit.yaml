@@ -3,6 +3,7 @@ speed_control: False
 initial_lookahead_distance : 0.4
 initial_velocity : 0.3
 controller_rate : 10
+goal_threshold: 0.15
 
 straight_lookahead_dist : 3.0
 turning_lookahead_dist : 0.5
