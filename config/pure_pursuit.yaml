@@ -4,6 +4,13 @@ initial_lookahead_distance : 0.4
 initial_velocity : 0.3
 controller_rate : 10
 goal_threshold: 0.15
+emotional_state : "happy"
+
+sleepy_vel_min: 0.1
+sleepy_vel_max: 0.6
+ramp_rate: 0.25
+execution_delay_min: 3
+execution_delay_max: 6
 
 straight_lookahead_dist : 3.0
 turning_lookahead_dist : 0.5
