@@ -80,6 +80,7 @@ class PurePursuit:
                         self.goal_lookahead_point = point
                         break
 
+
                 goal_point = self.goal_lookahead_point
 
                 # 3. Transform the goal point to vehicle coordinates.

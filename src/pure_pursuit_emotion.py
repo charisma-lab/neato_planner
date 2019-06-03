@@ -48,11 +48,16 @@ class PurePursuit:
         self.RAMP_RATE = rospy.get_param('ramp_rate', 0.25)  #m/s^2
         self.CURRENT_STATE = rospy.get_param('emotional_state', "happy")
 
+        self.ROTATION_TOLERANCE = 0.1
+        self.angular_velocity_grumpy = math.radians(45)
+        self.current_index = 0
+
     def waypoints_list_cb(self, msg):
         if not self.waypoints_read_flag:
             print("\nWaypoints received:")
-            self.waypoints = [(pose.pose.position.x, pose.pose.position.y, pose.pose.position.z) for pose in msg.poses]
+            self.waypoints = [(pose.pose.position.x, pose.pose.position.y, quaternion_to_euler_yaw(pose.pose.orientation)) for pose in msg.poses]
             self.waypoints_read_flag = True
+            self.current_index=0
 
     def check_goal(self, goal):
         if dist(goal, self.current_pose) <= self.GOAL_THRESHOLD:
@@ -192,10 +197,29 @@ class PurePursuit:
         x_wrt_car = -1.0 * distance * math.sin(gamma)
         return x_wrt_car
 
+    def rotate(self,angle):
+        while abs(angle-self.current_pose[2])>self.ROTATION_TOLERANCE:
+            sign = 1 if (angle - self.current_pose[2])>0 else -1
+            self.send_twist_vel(0,sign*self.angular_velocity_grumpy)
+        self.send_twist_vel(0, 0)
+
+    def do_grumpy_navigation(self):
+        self.current_index=0 #assign this zero everytime we get new set of waypoints
+        while (not rospy.is_shutdown()) or (self.current_index!=(len(self.waypoints)-1)):
+            self.rotate(self.waypoints[self.current_index][2])
+            if self.check_goal(self.waypoints[self.current_index+1]):
+                self.current_index +=1
+            self.send_twist_vel(self.VELOCITY,0.0)
+        self.rotate(self.waypoints[self.current_index])
+        self.send_twist_vel(0.0,0.0)
+
     def run_pure_pursuit(self):
         rate = rospy.Rate(self.RATE)
         while not rospy.is_shutdown():
-            self.do_pure_pursuit()
+            if self.CURRENT_STATE == "grumpy":
+                self.do_grumpy_navigation()
+            else:
+                self.do_pure_pursuit()
             self.emotion_pub.publish(String(self.CURRENT_STATE))
             rate.sleep()
 
