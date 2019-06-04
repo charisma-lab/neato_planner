@@ -1,13 +1,15 @@
 loop_enable: False
 speed_control: False
 initial_lookahead_distance : 0.4
-initial_velocity : 0.3
+initial_velocity : 0.4
 controller_rate : 10
-goal_threshold: 0.15
+goal_threshold: 0.5
+intermediate_goal_threshold: 0.15
+
 emotional_state : "happy"
 
 sleepy_vel_min: 0.1
-sleepy_vel_max: 0.6
+sleepy_vel_max: 0.55
 ramp_rate: 0.25
 execution_delay_min: 3
 execution_delay_max: 6

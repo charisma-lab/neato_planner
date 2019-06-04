@@ -11,7 +11,6 @@
   <arg name="pure_pursuit_config" default="$(find neato_planner)/config/pure_pursuit.yaml" />
   <rosparam file="$(arg pure_pursuit_config)" command="load"/>
   <node pkg="neato_planner" name="pure_pursuit_node" type="pure_pursuit_emotion.py"  output="screen">
-      <param name="waypoints_filepath" value="$(find neato_planner)/waypoints/patrol.csv"/> 
         <remap from="/social_global_plan" to="/$(arg user)/social_global_plan" />
   </node>
 	</group>
