@@ -10,6 +10,7 @@ from nav_msgs.msg import Path, Odometry
 import copy
 import time, sys
 
+
 class PurePursuit:
     def __init__(self):
         rospy.init_node('pure_pursuit_node')
@@ -35,7 +36,7 @@ class PurePursuit:
         self.MAX_X_DEVIATION = rospy.get_param('max_x_deviation', 4.75)
         self.RATE = rospy.get_param('controller_rate', 10)
         self.GOAL_THRESHOLD = rospy.get_param('goal_threshold', 0.5)
-        self.INTERMEDIATE_GOAL_THRESHOLD=rospy.get_param('intermediate_goal_threshold', 0.15)
+        self.INTERMEDIATE_GOAL_THRESHOLD = rospy.get_param('intermediate_goal_threshold', 0.15)
         self.EXECUTION_DELAY_MIN = rospy.get_param('execution_delay_min', 3.0)
         self.EXECUTION_DELAY_MAX = rospy.get_param('execution_delay_max', 6.0)
         self.VEL_MIN = rospy.get_param('sleepy_vel_min', 0.15)
@@ -44,7 +45,7 @@ class PurePursuit:
         self.previous_velocity = 0.0
         self.EXECUTION_DELAY = self.random_sample(self.EXECUTION_DELAY_MIN, self.EXECUTION_DELAY_MAX)
         self.last_time = time.time()
-        self.RAMP_RATE = rospy.get_param('ramp_rate', 0.25)  #m/s^2
+        self.RAMP_RATE = rospy.get_param('ramp_rate', 0.25)  # m/s^2
         self.CURRENT_STATE = rospy.get_param('emotional_state', "happy")
 
         self.ROTATION_TOLERANCE = 0.15
@@ -57,14 +58,16 @@ class PurePursuit:
         rospy.Subscriber('changed_goal', Bool, self.changed_goal_callback, queue_size=1)
 
     def waypoints_list_cb(self, msg):
-        if (not self.waypoints_read_flag) or self.changed_goal :
+        if (not self.waypoints_read_flag) or self.changed_goal:
             print("\nWaypoints received:")
-            self.waypoints = [(pose.pose.position.x, pose.pose.position.y, quaternion_to_euler_yaw(pose.pose.orientation)) for pose in msg.poses]
+            self.waypoints = [
+                (pose.pose.position.x, pose.pose.position.y, quaternion_to_euler_yaw(pose.pose.orientation)) for pose in
+                msg.poses]
             self.waypoints_read_flag = True
-            self.current_index=0
-            self.changed_goal=False
+            self.current_index = 0
+            self.changed_goal = False
 
-    def check_goal(self, goal,threshold):
+    def check_goal(self, goal, threshold):
         if dist(goal, self.current_pose) <= threshold:
             rospy.loginfo("Goal reached")
             self.send_twist_vel(0.0, 0.0)
@@ -85,7 +88,7 @@ class PurePursuit:
     def do_pure_pursuit(self):
         if self.waypoints_read_flag and self.pose_read_flag:
             last_index = len(self.waypoints) - 1
-            if not self.check_goal(self.waypoints[last_index],self.GOAL_THRESHOLD):
+            if not self.check_goal(self.waypoints[last_index], self.GOAL_THRESHOLD):
                 if self.SPEED_CONTROL:
                     average_x_from_car = self.get_x_deviation_in_path(self.current_pose[0], self.current_pose[1],
                                                                       self.current_pose[2])
@@ -130,7 +133,7 @@ class PurePursuit:
         twist_message.angular.z = angular_z
         self.drive_pub.publish(twist_message)
 
-    def random_sample(self,low, high):
+    def random_sample(self, low, high):
         return np.random.random() * (high - low) + low
 
     def social_planning_mode_callback(self, msg):
@@ -144,7 +147,7 @@ class PurePursuit:
             self.previous_velocity = copy.deepcopy(self.VELOCITY)
             self.VELOCITY = self.random_sample(self.VEL_MIN, self.VEL_MAX)
             # angular_z = angular_z + self.random_sample(-0.3,0.3)
-            delay = self.random_sample(self.EXECUTION_DELAY_MIN/2, self.EXECUTION_DELAY_MAX/2)
+            delay = self.random_sample(self.EXECUTION_DELAY_MIN / 2, self.EXECUTION_DELAY_MAX / 2)
             self.last_time = present_time
         else:
             delay = 0.0
@@ -161,7 +164,7 @@ class PurePursuit:
             if linear_velocity == 0.0:
                 self.send_twist_vel(linear_velocity, 0.0)
             else:
-                self.send_twist_vel(linear_velocity, angular_z/2.0)
+                self.send_twist_vel(linear_velocity, angular_z / 2.0)
             self.previous_velocity = linear_velocity
             rate_stop.sleep()
 
@@ -202,44 +205,56 @@ class PurePursuit:
         x_wrt_car = -1.0 * distance * math.sin(gamma)
         return x_wrt_car
 
-    def changed_goal_callback(self,msg):
+    def changed_goal_callback(self, msg):
         self.changed_goal = msg.data
 
-    def rotate(self,angle):
+    def rotate(self,linear_vel, angle,tolerance):
         print("angle is : {} and heading is : {}".format(angle, self.current_pose[2]))
-        while abs(angle-self.current_pose[2])>self.ROTATION_TOLERANCE:
-            if (angle-self.current_pose[2])>0:
-                sign=1
+        while abs(angle - self.current_pose[2]) > tolerance:
+            if (angle - self.current_pose[2]) > 0:
+                sign = 1
             else:
-                sign=-1
-            self.send_twist_vel(0,sign*self.angular_velocity_grumpy)
+                sign = -1
+            self.send_twist_vel(linear_vel, sign * self.angular_velocity_grumpy)
             rospy.sleep(0.1)
-            print("angle is : {} and heading is : {}".format(angle, self.current_pose[2]),sign)
+            print("angle is : {} and heading is : {}".format(angle, self.current_pose[2]), sign)
 
         # self.send_twist_vel(0, 0)
+    def find_next_heading_grumpy(self,point):
+        delta_y = point[1] - self.current_pose[1]
+        delta_x = point[0] - self.current_pose[0]
+        heading = math.atan2(delta_y, delta_x)
+        return heading
+
+    def move_to_point(self,point,goal_threshold):
+        kp=5
+        while not rospy.is_shutdown():
+            heading = self.find_next_heading_grumpy(point)
+            error = heading - self.current_pose[2]
+            self.send_twist_vel(self.VELOCITY, kp*error)
+            if self.check_goal(point, goal_threshold):
+                break
+            rospy.sleep(0.05)
+
 
     def do_grumpy_navigation(self):
-        self.current_index=0 #assign this zero everytime we get new set of waypoints
-        delta_y=self.waypoints[self.current_index][1]-self.current_pose[1]
-        delta_x=self.waypoints[self.current_index][0]-self.current_pose[0]
-        heading = math.atan2(delta_y,delta_x)
-        while (not rospy.is_shutdown()) or (self.current_index!=(len(self.waypoints)-1)):
-            self.rotate(heading)
-            if self.current_index == (len(self.waypoints)-2):
-                if self.check_goal(self.waypoints[self.current_index+1],self.GOAL_THRESHOLD):
-                    self.current_index +=1
-                    delta_y=self.waypoints[self.current_index][1]-self.current_pose[1]
-                    delta_x=self.waypoints[self.current_index][0]-self.current_pose[0]
-                    heading = math.atan2(delta_y,delta_x)
-            else:
-                if self.check_goal(self.waypoints[self.current_index+1],self.INTERMEDIATE_GOAL_THRESHOLD):
-                    self.current_index +=1
-                    delta_y=self.waypoints[self.current_index][1]-self.current_pose[1]
-                    delta_x=self.waypoints[self.current_index][0]-self.current_pose[0]
-                    heading = math.atan2(delta_y,delta_x)
-            self.send_twist_vel(self.VELOCITY,0.0)
-        self.rotate(self.waypoints[self.current_index-1])
-        self.send_twist_vel(0.0,0.0)
+        self.current_index = 0  # assign this zero everytime we get new set of waypoints
+        random_stop_prob=0.3
+        while (not rospy.is_shutdown()) or (self.current_index != (len(self.waypoints) - 1)):
+            heading = self.find_next_heading_grumpy(self.waypoints[self.current_index+1])
+            self.rotate(0,heading,self.ROTATION_TOLERANCE)
+            if self.current_index < (len(self.waypoints) - 2):
+                self.move_to_point(self.waypoints[self.current_index + 1], self.INTERMEDIATE_GOAL_THRESHOLD)
+            elif self.current_index == (len(self.waypoints) - 2):
+                self.move_to_point(self.waypoints[self.current_index+1],self.GOAL_THRESHOLD)
+                break
+            self.current_index +=1
+            if np.random.random() < random_stop_prob:
+                self.send_twist_vel(0,0)
+                rospy.sleep(0.1)
+        heading = self.find_next_heading_grumpy(self.waypoints[self.current_index+1])
+        self.rotate(0, heading, self.ROTATION_TOLERANCE)
+        self.send_twist_vel(0.0, 0.0)
 
     def run_pure_pursuit(self):
         rate = rospy.Rate(self.RATE)
@@ -256,11 +271,11 @@ if __name__ == '__main__':
     pure_pursuit = PurePursuit()
     key_input = input('Enter my emotion: \n 1: happy \t 2: grumpy \t 3: sleepy \n')
     if key_input == 1:
-	    pure_pursuit.CURRENT_STATE = "happy"
+        pure_pursuit.CURRENT_STATE = "happy"
     elif key_input == 2:
-	    pure_pursuit.CURRENT_STATE = "grumpy"
+        pure_pursuit.CURRENT_STATE = "grumpy"
     elif key_input == 3:
-	    pure_pursuit.CURRENT_STATE = "sleepy"
+        pure_pursuit.CURRENT_STATE = "sleepy"
     rospy.sleep(5.0)
     pure_pursuit.run_pure_pursuit()
     rospy.spin()
