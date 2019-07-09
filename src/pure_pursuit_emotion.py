@@ -68,6 +68,7 @@ class PurePursuit:
             self.changed_goal = False
 
     def check_goal(self, goal, threshold):
+        """check if the robot has reached the goal, returns True if the robot has reached the goal"""
         if dist(goal, self.current_pose) <= threshold:
             rospy.loginfo("Goal reached")
             self.send_twist_vel(0.0, 0.0)
@@ -76,7 +77,7 @@ class PurePursuit:
             return False
 
     def pf_pose_callback(self, msg):
-        # 1. Determine the current location of the vehicle
+        """Determine the current location of the robot and set the pose_read_flag to True"""
         pose_x = msg.pose.position.x
         pose_y = msg.pose.position.y
         pose_yaw = quaternion_to_euler_yaw(msg.pose.orientation)
