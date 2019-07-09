@@ -274,13 +274,21 @@ class PurePursuit:
 
 if __name__ == '__main__':
     pure_pursuit = PurePursuit()
-    key_input = input('Enter my emotion: \n 1: happy \t 2: grumpy \t 3: sleepy \n')
+    key_input = input('Enter my emotion: \n 1: happy \t 2: grumpy \t 3: sleepy \t 4: sneezy \t 5: doc \t 6: dopey \t 7: bashful \n')
     if key_input == 1:
         pure_pursuit.CURRENT_STATE = "happy"
     elif key_input == 2:
         pure_pursuit.CURRENT_STATE = "grumpy"
     elif key_input == 3:
         pure_pursuit.CURRENT_STATE = "sleepy"
+    elif key_input == 4: 
+        pure_pursuit.CURRENT_STATE = "sneezy"
+    elif key_input == 5: 
+        pure_pursuit.CURRENT_STATE = "doc"
+    elif key_input == 6: 
+        pure_pursuit.CURRENT_STATE = "dopey"
+    elif key_input == 7: 
+        pure_pursuit.CURRENT_STATE = "bashful"
     rospy.sleep(5.0)
     pure_pursuit.run_pure_pursuit()
     rospy.spin()
