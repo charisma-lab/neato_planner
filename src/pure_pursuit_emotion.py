@@ -238,6 +238,8 @@ class PurePursuit:
 
 
     def do_grumpy_navigation(self):
+        """the navigation for the grumpy state--involves random jerks 
+        and head rotations"""
         self.current_index = 0  # assign this zero everytime we get new set of waypoints
         random_stop_prob=0.3
         while (not rospy.is_shutdown()) or (self.current_index != (len(self.waypoints) - 1)):
@@ -257,6 +259,8 @@ class PurePursuit:
         self.send_twist_vel(0.0, 0.0)
 
     def run_pure_pursuit(self):
+        """execute navigation for the given state: grumpy, happy, sleepy,
+        sneezy, dopey, doc, and bashful"""
         rate = rospy.Rate(self.RATE)
         while not rospy.is_shutdown():
             if self.CURRENT_STATE == "grumpy":
