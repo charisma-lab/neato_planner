@@ -58,7 +58,7 @@ class PurePursuit:
         rospy.Subscriber('changed_goal', Bool, self.changed_goal_callback, queue_size=1)
 
     def waypoints_list_cb(self, msg):
-        if (not self.waypoints_read_flag) or self.changed_goal:
+        if (not self.waypoints_read_flag) or self.changed_goal: #if the waypoints have not been read and the goal has not changed
             print("\nWaypoints received:")
             self.waypoints = [
                 (pose.pose.position.x, pose.pose.position.y, quaternion_to_euler_yaw(pose.pose.orientation)) for pose in
@@ -81,7 +81,7 @@ class PurePursuit:
         pose_x = msg.pose.position.x
         pose_y = msg.pose.position.y
         pose_yaw = quaternion_to_euler_yaw(msg.pose.orientation)
-        self.current_pose = [pose_x, pose_y, pose_yaw]
+        self.current_pose = [pose_x, pose_y, pose_yaw] 
         if not self.pose_read_flag:
             self.pose_read_flag = True
         # print "pose:=", pose_x, pose_y, pose_yaw
@@ -129,12 +129,14 @@ class PurePursuit:
             self.waypoints_read_flag = False
 
     def send_twist_vel(self, linear_x, angular_z):
+        """creates a twist message and publishes it -- makes the robot turn until it reaches the angle"""
         twist_message = Twist()
-        twist_message.linear.x = linear_x
-        twist_message.angular.z = angular_z
+        twist_message.linear.x = linear_x 
+        twist_message.angular.z = angular_z 
         self.drive_pub.publish(twist_message)
 
     def random_sample(self, low, high):
+        #np.random.random() returns a random float between 0.0 and 1.0 
         return np.random.random() * (high - low) + low
 
     def social_planning_mode_callback(self, msg):
@@ -201,12 +203,13 @@ class PurePursuit:
         return average_x_from_car
 
     def compute_x_wrt_car(self, deltax, deltay, yaw, distance):
-        beta = math.atan2(deltax, deltay)
+        beta = math.atan2(deltax, deltay) #atan(deltay/deltax) in radians 
         gamma = math.pi / 2 - yaw - beta
         x_wrt_car = -1.0 * distance * math.sin(gamma)
         return x_wrt_car
 
     def changed_goal_callback(self, msg):
+        """checks to see if the goal has changed and sets self.changed_goal"""
         self.changed_goal = msg.data
 
     def rotate(self,linear_vel, angle,tolerance):
@@ -215,25 +218,27 @@ class PurePursuit:
             if (angle - self.current_pose[2]) > 0:
                 sign = 1
             else:
-                sign = -1
-            self.send_twist_vel(linear_vel, sign * self.angular_velocity_grumpy)
+                sign = -1 #sign = -1 vs sign = 1 will determine if the robot moves CW or CCW
+            self.send_twist_vel(linear_vel, sign * self.angular_velocity_grumpy) #publishes twist message 
             rospy.sleep(0.1)
             print("angle is : {} and heading is : {}".format(angle, self.current_pose[2]), sign)
 
         # self.send_twist_vel(0, 0)
+
     def find_next_heading_grumpy(self,point):
+        """returns the next angle that grumpy should turn"""
         delta_y = point[1] - self.current_pose[1]
         delta_x = point[0] - self.current_pose[0]
-        heading = math.atan2(delta_y, delta_x)
+        heading = math.atan2(delta_y, delta_x) #returns atan(y/x) in radians
         return heading
 
     def move_to_point(self,point,goal_threshold):
-        kp=5
+        kp=5 
         while not rospy.is_shutdown():
             heading = self.find_next_heading_grumpy(point)
             error = heading - self.current_pose[2]
             self.send_twist_vel(self.VELOCITY, kp*error)
-            if self.check_goal(point, goal_threshold):
+            if self.check_goal(point, goal_threshold): #break if robot has reached the goal
                 break
             rospy.sleep(0.05)
 
