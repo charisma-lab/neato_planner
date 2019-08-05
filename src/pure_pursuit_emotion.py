@@ -140,6 +140,7 @@ class PurePursuit:
         return np.random.random() * (high - low) + low
 
     def social_planning_mode_callback(self, msg):
+        """get the current state ie the personality and set the CURRENT_STATE"""
         self.CURRENT_STATE = msg.data
         print "current state=", self.CURRENT_STATE
 
@@ -172,11 +173,11 @@ class PurePursuit:
             rate_stop.sleep()
 
     def ramp_velocity(self, target_vel, previous_vel, ramp_rate):
-        sign = 1 if target_vel >= previous_vel else -1
+        sign = 1 if target_vel >= previous_vel else -1 
         if sign == 1:
             return target_vel
         step_size = ramp_rate / self.RATE
-        delta = math.fabs(target_vel - previous_vel)
+        delta = math.fabs(target_vel - previous_vel) #always return a float 
         if delta >= step_size:
             command_vel = previous_vel + sign * step_size
         else:
