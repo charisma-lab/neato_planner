@@ -18,9 +18,9 @@ def read_waypoints_from_csv(filename):
     return path_points
 
 
-# Computes the Euclidean distance between two 2D points p1 and p2.
 def dist(p1, p2):
-    return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+    """Calculate sthe straight line distance between two points (p1 and p2)"""
+    return np.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) # ** is exponent 
 
 
 # Computes euler yaw angle from the quaternion data
